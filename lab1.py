@@ -11,45 +11,78 @@ class Tarification:
     def ratify_calls(self, call_out, call_in):
         with open(self.file_name) as csv_file:
             data = csv.DictReader(csv_file)
-            full_price_call = 0
-            full_call_duration = 0
+            prices = []
             for row in data:
+                call_duration = float(row['call_duration'])
                 if row['msisdn_origin'] == self.number:
-                    call_duration = ceil(float(row['call_duration']))
-                    full_call_duration += call_duration
                     for call in call_out:
                         if not call[0]:
-                            full_price_call += call_duration * call[1]
+                            new_value = call_duration * call[1]
+                            prices.append([
+                                call_duration,
+                                new_value,
+                                call[1],
+                                'Пакет входящих звонков'
+                            ])
                         else:
-                            full_price_call += min(call_duration, call[0]) * call[1]
+                            time = min(call_duration, call[0])
+                            new_value = time * call[1]
+                            prices.append([
+                                time,
+                                new_value,
+                                call[1],
+                                'Пакет входящих звонков'
+                            ])
                             call_duration -= call[0]
                 elif row['msisdn_dest'] == self.number:
-                    call_duration = ceil(float(row['call_duration']))
-                    full_call_duration += call_duration
                     for call in call_in:
                         if not call[0]:
-                            full_price_call += call_duration * call[1]
+                            new_value = call_duration * call[1]
+                            prices.append([
+                                call_duration,
+                                new_value,
+                                call[1],
+                                'Пакет исходящих звонков'
+                            ])
                         else:
-                            full_price_call += min(call_duration, call[0]) * call[1]
+                            time = min(call_duration, call[0])
+                            new_value = time * call[1]
+                            prices.append([
+                                time,
+                                new_value,
+                                call[1],
+                                'Пакет исходящих звонков'
+                            ])
                             call_duration -= call[0]
-        return int(full_price_call), full_call_duration
+        return prices
 
     def ratify_sms(self, sms_value):
         with open(self.file_name) as csv_file:
             data = csv.DictReader(csv_file)
-            full_price_sms = 0
-            whole_sms_num = 0
+            prices = []
             for row in data:
                 if row['msisdn_origin'] == self.number:
-                    sms_number = int(row['sms_number'])
-                    whole_sms_num += sms_number
+                    sms_number = float(row['sms_number'])
                     for sms in sms_value:
                         if not sms[0]:
-                            full_price_sms += sms_number * sms[1]
+                            new_value = sms_number * sms[1]
+                            prices.append([
+                                sms_number,
+                                new_value,
+                                sms[1],
+                                'Пакет входящих смс'
+                            ])
                         else:
-                            full_price_sms += min(sms_number, sms[0]) * sms[1]
+                            sms_col = min(sms_number, sms[0])
+                            new_value = sms_col * sms[1]
+                            prices.append([
+                                sms_col,
+                                new_value,
+                                sms[1],
+                                'Пакет исходящих смс'
+                            ])
                             sms_number -= sms[0]
-        return int(sms_number), whole_sms_num
+        return prices
 
 def main():
 
@@ -59,8 +92,36 @@ def main():
     sms_value = [[10, 0], [None, 5]]
 
     ratify = Tarification('data.csv', number)
-    Phone_cost, Phone_col = ratify.ratify_calls(call_out, call_in)
-    SMS_cost, SMS_col = ratify.ratify_sms(sms_value)
+    calls_prices = ratify.ratify_calls(call_out, call_in)
+    sms_prices = ratify.ratify_sms(sms_value)
+    items = []
+    for call in calls_prices:
+        items.append({
+            'item': call[3],
+            'col': call[0],
+            'units': 'Мин.',
+            'price': call[2],
+            'sum': call[1],
+        })
+    for sms in sms_prices:
+        items.append({
+            'item': sms[3],
+            'col': sms[0],
+            'units': 'Мин.',
+            'price': sms[2],
+            'sum': sms[1],
+        })
+    # print(items)
+    whole_price = 0
+    for call in calls_prices:
+        print('Call time: {} mins, Call price: {} rub'.format(call[0], call[1]))
+        whole_price += call[1]
+    print('Whole price: {} rub\n'.format(whole_price))
+    whole_price = 0
+    for sms in sms_prices:
+        print('Sms col: {} mins, Sms price: {} rub'.format(sms[0], sms[1]))
+        whole_price += sms[1]
+    print('Whole price: {} rub\n'.format(whole_price))
 
     pdf = PdfCreator()
     file_name = 'tax_tele.pdf'
@@ -77,18 +138,7 @@ def main():
     reason = '№ 20022016 от 12.02.2016'
     leader_name = 'Семенов Д.А.'
     accountant_name = 'Семенов Д.А.'
-    items = [{
-        'item': 'Пакет звонков',
-        'col': Phone_col,
-        'units': 'Мин.',
-        'price': Phone_cost,
-    }, {
-        'item': 'Пакет смс',
-        'col': SMS_col,
-        'units': 'Шт.',
-        'price': SMS_cost
-    }
-    ]
+
     pdf.build_pdf(file_name,
                   document_title,
                   reciver_bank,

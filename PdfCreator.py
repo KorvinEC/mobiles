@@ -15,10 +15,10 @@ def create_items(items):
         ['№', 'Товары (работы, услуги)', 'Кол-во', 'Ед.', "Цена", "Сумма"]
     )
     for item, i in zip(items, range(len(items))):
-        result_summ += item['price']
+        result_summ += item['sum']
         result_summ = round(result_summ, 2)
         result_list.append(
-            [i + 1, str_format(item['item'], 50), item['col'], item['units'], item['price'], result_summ]
+            [i + 1, str_format(item['item'], 50), item['col'], item['units'], item['price'], item['sum']]
         )
     return result_list, result_summ, len(result_list) - 1
 
