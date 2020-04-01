@@ -84,6 +84,7 @@ class Tarification:
                             sms_number -= sms[0]
         return prices
 
+
 def main():
 
     number = '933156729'
@@ -154,16 +155,6 @@ def main():
                   leader_name,
                   accountant_name,
                   items)
-
-    # number = '968247916'
-
-    # call_out = [[None, 4]]
-    # call_in = [[5.0, 0], [None, 1]]
-    # sms_value = [[5.0, 0], [None, 1]]
-    #
-    # ratify = Tarification('data.csv', number)
-    # print('Phone cost:', ratify.ratify_calls(call_out, call_in))
-    # print('SMS cost:', ratify.ratify_sms(sms_value))
 
 
 if __name__ == '__main__':

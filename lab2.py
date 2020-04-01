@@ -71,11 +71,19 @@ class TarificationNet:
             for row in data:
                 if self.ip in row['Src IP Addr:Port'] or self.ip in row['Dst IP Addr:Port']:
                     full_bytes += ceil(float(row['In Byte']))
-        full_price = 0
+        full_price = []
         for price in prices:
             if price[0] == 'length':
                 if not price[1]:
-                    full_price += price[2] * convert_bytes(full_bytes, 'b', price[3])
+                    new_bytes = convert_bytes(full_bytes, 'b', price[3])
+                    value = round(price[2] * new_bytes, 2)
+                    full_price.append([
+                        'Интернет',
+                        round(new_bytes, 2),
+                        price[3] + 'b',
+                        price[2],
+                        value,
+                    ])
                 else:
                     bytes_value = min(convert_bytes(full_bytes, 'b', price[3]), convert_bytes(price[1], 'b', price[3]))
                     full_price += price[2] * bytes_value
@@ -88,7 +96,8 @@ class TarificationNet:
                     full_price += new_price * bytes_value
                     bytes_buff -= price[1]
                     new_price += price[2]
-        return full_bytes, round(full_price, 2)
+        return full_price
+        # return full_bytes, full_price
 
     def graph_stat(self):
         with open(self.file_name) as csv_file:
@@ -136,48 +145,55 @@ def main():
     ]
 
     ratify = TarificationNet(file, target_ip)
-    full_Bytes, price = ratify.ratify_ip(prices)
+    net_prices = ratify.ratify_ip(prices)
+    for price in net_prices:
+        print('Bytes: {} {}\nPrice: {} rub'.format(price[1], price[2], price[4]))
 
-    pdf = PdfCreator()
-    file_name = 'tax_inet.pdf'
-    document_title = 'Счет на оплату'
-    reciver_bank = 'АО "Стоун банк" Г. МОСКВА'
-    INN = '7722737766'
-    BIK = '044525700'
-    tax_number = '30101810200000000700'
-    tax_number_2 = '40702810900000002453'
-    tax_number_3 = '86'
-    reciver_user = 'ООО"Василек"'
-    date_number = '01 июля 2016 г.'
-    creator = 'ООО"ВАСИЛЕК", ИНН 7722737753, КПП 773301001, 109052, Москва ДОБРЫНИНСКАЯ ул, дом №70, корпус 2, тел.: '
-    client = 'ООО ЛАГУНА, ИНН 7714037378, КПП 777550001, 119361, Москва г, ТУЛЬСКАЯ М.ул, дом № 4, строение 1'
-    reason = '№ 20022016 от 12.02.2016'
-    leader_name = 'Семенов Д.А.'
-    accountant_name = 'Семенов Д.А.'
-    items = [{
-        'item': 'Интернет',
-        'col': round(convert_bytes(full_Bytes, 'b', 'k'), 2),
-        'units': 'Кб',
-        'price': price,
-    }]
-    pdf.build_pdf(file_name,
-                  document_title,
-                  reciver_bank,
-                  INN,
-                  BIK,
-                  tax_number,
-                  tax_number_2,
-                  tax_number_3,
-                  reciver_user,
-                  creator,
-                  client,
-                  reason,
-                  leader_name,
-                  accountant_name,
-                  items)
+    # items = []
+    # for price in net_prices:
+    #     items.append({
+    #         'item': price[0],
+    #         'col': price[1],
+    #         'units': price[2],
+    #         'price': price[3],
+    #         'sum': price[4],
+    #     })
+    # print(items)
+    #
+    # pdf = PdfCreator()
+    # file_name = 'tax_inet.pdf'
+    # document_title = 'Счет на оплату'
+    # reciver_bank = 'АО "Стоун банк" Г. МОСКВА'
+    # INN = '7722737766'
+    # BIK = '044525700'
+    # tax_number = '30101810200000000700'
+    # tax_number_2 = '40702810900000002453'
+    # tax_number_3 = '86'
+    # reciver_user = 'ООО"Василек"'
+    # date_number = '01 июля 2016 г.'
+    # creator = 'ООО"ВАСИЛЕК", ИНН 7722737753, КПП 773301001, 109052, Москва ДОБРЫНИНСКАЯ ул, дом №70, корпус 2, тел.: '
+    # client = 'ООО ЛАГУНА, ИНН 7714037378, КПП 777550001, 119361, Москва г, ТУЛЬСКАЯ М.ул, дом № 4, строение 1'
+    # reason = '№ 20022016 от 12.02.2016'
+    # leader_name = 'Семенов Д.А.'
+    # accountant_name = 'Семенов Д.А.'
+    # pdf.build_pdf(file_name,
+    #               document_title,
+    #               reciver_bank,
+    #               INN,
+    #               BIK,
+    #               tax_number,
+    #               tax_number_2,
+    #               tax_number_3,
+    #               reciver_user,
+    #               creator,
+    #               client,
+    #               reason,
+    #               leader_name,
+    #               accountant_name,
+    #               items)
 
 
-    ratify.graph_stat()
+    # ratify.graph_stat()
 
     # target_ip = '192.168.250.1'
     # prices = [
